@@ -63,14 +63,21 @@ export function LandingView({ onMeasure }: LandingViewProps) {
         >
           <div className="relative group">
             <div className="absolute inset-0 rounded-2xl bg-primary/5 blur-xl group-focus-within:bg-primary/10 transition-all duration-500" />
-            <div className="relative glass-panel rounded-2xl flex items-center gap-3 px-5 py-4">
-              <Search className="w-5 h-5 text-muted-foreground shrink-0" />
+            <label
+              htmlFor="landing-search"
+              className="relative glass-panel rounded-2xl flex items-center gap-3 px-6 py-5 min-h-[4.25rem] w-full cursor-text transition-[border-color,box-shadow] duration-200 group-focus-within:border-primary/35 group-focus-within:shadow-[0_0_0_1px_color-mix(in_srgb,var(--primary)_25%,transparent)]"
+            >
+              <Search
+                className="w-6 h-6 text-muted-foreground shrink-0 pointer-events-none"
+                aria-hidden
+              />
               <Input
+                id="landing-search"
                 type="text"
                 value={term}
                 onChange={(e) => setTerm(e.target.value)}
                 placeholder="Enter any technology or concept..."
-                className="h-auto flex-1 border-0 bg-transparent px-0 py-0 text-lg font-light shadow-none placeholder:text-muted-foreground/60 focus-visible:ring-0"
+                className="h-auto min-h-0 flex-1 border-0 rounded-none bg-transparent px-0 py-0 text-lg sm:text-lg md:text-lg font-light shadow-none outline-none ring-0 placeholder:text-muted-foreground/55 focus-visible:ring-0 focus-visible:border-0 focus-visible:shadow-none dark:bg-transparent disabled:bg-transparent disabled:opacity-100"
               />
               <Button
                 type="submit"
@@ -80,7 +87,7 @@ export function LandingView({ onMeasure }: LandingViewProps) {
               >
                 Measure
               </Button>
-            </div>
+            </label>
           </div>
         </form>
 

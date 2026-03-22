@@ -14,6 +14,7 @@ import {
   recordQueryAndLink,
   upsertReportFromLlm,
 } from "@/lib/measure-store";
+import { isSupabaseServiceConfigured } from "@/lib/supabase/service";
 import { normalizeQuery } from "@/lib/normalize-query";
 
 export const maxDuration = 60;
@@ -138,6 +139,17 @@ export async function POST(req: Request) {
       analysis,
       model,
     });
+  }
+
+  const persistEnabled = isSupabaseServiceConfigured();
+  if (!persistEnabled) {
+    console.warn(
+      "[measure] Supabase not configured: set SUPABASE_URL (or NEXT_PUBLIC_SUPABASE_URL) and SUPABASE_SERVICE_ROLE_KEY. Apply migrations under supabase/migrations. Nothing is written to the database.",
+    );
+  } else if (!cached && !reportId) {
+    console.error(
+      "[measure] Report was not saved (upsert failed or returned no id). Check [measure-store] logs and that tables reports, queries, query_reports exist.",
+    );
   }
 
   if (reportId) {

@@ -22,7 +22,12 @@ export async function findCachedReport(
     .maybeSingle();
 
   if (error) {
-    console.error("[measure-store] findCachedReport", error);
+    console.error(
+      "[measure-store] findCachedReport",
+      error.message,
+      error.details ?? "",
+      error.hint ?? "",
+    );
     return null;
   }
   if (!data?.payload) return null;
@@ -63,7 +68,12 @@ export async function upsertReportFromLlm(params: {
     .single();
 
   if (error) {
-    console.error("[measure-store] upsertReportFromLlm", error);
+    console.error(
+      "[measure-store] upsertReportFromLlm",
+      error.message,
+      error.details ?? "",
+      error.hint ?? "",
+    );
     return null;
   }
   return data?.id ?? null;
@@ -97,7 +107,12 @@ export async function recordQueryAndLink(params: {
     .single();
 
   if (e1 || !inserted) {
-    console.error("[measure-store] insert queries", e1);
+    console.error(
+      "[measure-store] insert queries",
+      e1?.message,
+      e1?.details ?? "",
+      e1?.hint ?? "",
+    );
     return;
   }
 
@@ -107,6 +122,11 @@ export async function recordQueryAndLink(params: {
   });
 
   if (e2) {
-    console.error("[measure-store] insert query_reports", e2);
+    console.error(
+      "[measure-store] insert query_reports",
+      e2.message,
+      e2.details ?? "",
+      e2.hint ?? "",
+    );
   }
 }
