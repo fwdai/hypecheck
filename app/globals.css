@@ -7,9 +7,12 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-jetbrains), ui-monospace, monospace;
+  --font-heading: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --color-success: hsl(var(--success));
+  --color-hype: hsl(var(--hype));
+  --color-hype-mid: hsl(var(--hype-mid));
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -83,38 +86,42 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+/* Hypometer dark theme (ported from .lovable) */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --background: hsl(220 20% 4%);
+  --foreground: hsl(210 20% 92%);
+  --card: hsl(220 18% 8%);
+  --card-foreground: hsl(210 20% 92%);
+  --popover: hsl(220 18% 8%);
+  --popover-foreground: hsl(210 20% 92%);
+  --primary: hsl(175 80% 50%);
+  --primary-foreground: hsl(220 20% 4%);
+  --secondary: hsl(220 15% 14%);
+  --secondary-foreground: hsl(210 20% 85%);
+  --muted: hsl(220 15% 12%);
+  --muted-foreground: hsl(215 15% 50%);
+  --accent: hsl(175 80% 50%);
+  --accent-foreground: hsl(220 20% 4%);
+  --destructive: hsl(0 72% 55%);
+  --border: hsl(220 15% 16%);
+  --input: hsl(220 15% 16%);
+  --ring: hsl(175 80% 50%);
+  --success: 145 65% 42%;
+  --hype: 0 72% 55%;
+  --hype-mid: 35 90% 55%;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: hsl(220 18% 6%);
+  --sidebar-foreground: hsl(210 20% 85%);
+  --sidebar-primary: hsl(175 80% 50%);
+  --sidebar-primary-foreground: hsl(220 20% 4%);
+  --sidebar-accent: hsl(220 15% 14%);
+  --sidebar-accent-foreground: hsl(210 20% 85%);
+  --sidebar-border: hsl(220 15% 16%);
+  --sidebar-ring: hsl(175 80% 50%);
 }
 
 @layer base {
@@ -126,5 +133,80 @@
   }
   html {
     @apply font-sans;
+  }
+
+  .font-mono {
+    font-family: var(--font-mono-jetbrains), ui-monospace, monospace;
+  }
+}
+
+@layer components {
+  .dot-grid {
+    background-image: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--muted-foreground) 15%, transparent) 1px,
+      transparent 1px
+    );
+    background-size: 24px 24px;
+  }
+
+  .glass-panel {
+    background: color-mix(in srgb, var(--card) 60%, transparent);
+    backdrop-filter: blur(16px);
+    border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  }
+
+  .glow-pulse {
+    animation: glow-pulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes glow-pulse {
+    0%,
+    100% {
+      box-shadow:
+        0 0 20px color-mix(in srgb, var(--primary) 20%, transparent),
+        0 0 60px color-mix(in srgb, var(--primary) 5%, transparent);
+    }
+    50% {
+      box-shadow:
+        0 0 30px color-mix(in srgb, var(--primary) 35%, transparent),
+        0 0 80px color-mix(in srgb, var(--primary) 10%, transparent);
+    }
+  }
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-up {
+    animation: fade-up 0.5s ease-out forwards;
+  }
+
+  .animate-fade-up-delay-1 {
+    animation: fade-up 0.5s ease-out 0.1s forwards;
+    opacity: 0;
+  }
+  .animate-fade-up-delay-2 {
+    animation: fade-up 0.5s ease-out 0.2s forwards;
+    opacity: 0;
+  }
+  .animate-fade-up-delay-3 {
+    animation: fade-up 0.5s ease-out 0.3s forwards;
+    opacity: 0;
+  }
+  .animate-fade-up-delay-4 {
+    animation: fade-up 0.5s ease-out 0.4s forwards;
+    opacity: 0;
+  }
+  .animate-fade-up-delay-5 {
+    animation: fade-up 0.5s ease-out 0.5s forwards;
+    opacity: 0;
   }
 }
