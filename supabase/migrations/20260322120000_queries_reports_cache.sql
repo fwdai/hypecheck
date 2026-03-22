@@ -1,5 +1,5 @@
 /*
-  Hypometer: visitor queries, cached LLM reports, and junction links.
+  HYPECHECK: visitor queries, cached LLM reports, and junction links.
   Many queries can reference the same report (same normalized query → shared cache).
 
   RLS is enabled with no policies so only the service role (used by the Next.js API) can access.

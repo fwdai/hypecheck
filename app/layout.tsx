@@ -14,7 +14,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hypometer",
+  title: "HYPECHECK",
   description:
     "Measure the hype level of any technology or concept with AI-powered analysis.",
 };

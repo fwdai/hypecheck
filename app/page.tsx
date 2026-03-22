@@ -1,5 +1,5 @@
-import { HypometerPage } from "@/components/hypometer-page";
+import { HypeMeterPage } from "@/components/hype-meter-page";
 
 export default function Home() {
-  return <HypometerPage />;
+  return <HypeMeterPage />;
 }

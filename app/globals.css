@@ -51,7 +51,7 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Hypometer light theme — cool paper, teal accent */
+/* HYPECHECK light theme — cool paper, teal accent */
 :root {
   --background: hsl(210 40% 98%);
   --foreground: hsl(222 47% 11%);
@@ -95,7 +95,7 @@
   --gauge-label-hype: hsl(0 72% 46% / 0.85);
 }
 
-/* Hypometer dark theme (ported from .lovable) */
+/* HYPECHECK dark theme (ported from .lovable) */
 .dark {
   --background: hsl(220 20% 4%);
   --foreground: hsl(210 20% 92%);

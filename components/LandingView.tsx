@@ -33,11 +33,11 @@ export function LandingView({ onMeasure }: LandingViewProps) {
       <div className="max-w-2xl w-full flex flex-col items-center gap-10">
         <div className="flex flex-col items-center gap-3 animate-fade-up">
           <div className="flex items-center gap-2.5 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-              <Zap className="w-5 h-5 text-primary" />
+            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <Zap className="w-4 h-4 text-primary" />
             </div>
-            <span className="font-mono text-sm font-semibold tracking-wider text-primary uppercase">
-              Hypometer
+            <span className="font-mono text-base font-semibold tracking-wider text-primary uppercase pt-0.5">
+              HYPECHECK
             </span>
           </div>
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-center leading-tight tracking-tight">
@@ -85,7 +85,7 @@ export function LandingView({ onMeasure }: LandingViewProps) {
                 size="lg"
                 className="shrink-0 rounded-xl glow-pulse"
               >
-                Measure
+                Check
               </Button>
             </label>
           </div>
@@ -99,16 +99,21 @@ export function LandingView({ onMeasure }: LandingViewProps) {
               variant="outline"
               size="sm"
               onClick={() => onMeasure(s)}
-              className="rounded-full border-border/60 text-secondary-foreground/80 hover:border-primary/40 hover:text-primary hover:bg-primary/5"
+              className="rounded-full border-border/70 bg-muted text-secondary-foreground/90 hover:border-primary/40 hover:text-primary hover:bg-accent/45 dark:border-input/50 dark:bg-input/30 dark:text-secondary-foreground/80 dark:hover:border-primary/40 dark:hover:bg-input/50 dark:hover:text-primary"
             >
               {s}
             </Button>
           ))}
         </div>
 
-        <p className="text-muted-foreground/40 text-xs font-mono animate-fade-up-delay-3">
-          Powered by AI analysis · Not financial advice
+        <p className="text-muted-foreground/40 text-xs font-mono animate-fade-up-delay-3 text-center">
+          <div className="mb-4">Powered by AI · Not financial advice</div>
+          <div>
+            Assessed by the same technology being assessed. Make of that what
+            you will.
+          </div>
         </p>
+        <p></p>
       </div>
     </div>
   );

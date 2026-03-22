@@ -8,7 +8,7 @@ import { ResultsView } from "@/components/ResultsView";
 import { getVisitorSessionId } from "@/lib/visitor-session";
 import type { AppState, HypeAnalysis } from "@/types/hype";
 
-export function HypometerPage() {
+export function HypeMeterPage() {
   const [state, setState] = useState<AppState>("landing");
   const [term, setTerm] = useState("");
   const [result, setResult] = useState<HypeAnalysis | null>(null);
