@@ -8,7 +8,11 @@ import { ResultsView } from "@/components/ResultsView";
 import { getVisitorSessionId } from "@/lib/visitor-session";
 import type { AppState, HypeAnalysis } from "@/types/hype";
 
-export function HypeMeterPage() {
+interface HypeMeterPageProps {
+  suggestions: string[];
+}
+
+export function HypeMeterPage({ suggestions }: HypeMeterPageProps) {
   const [state, setState] = useState<AppState>("landing");
   const [term, setTerm] = useState("");
   const [result, setResult] = useState<HypeAnalysis | null>(null);
@@ -66,5 +70,5 @@ export function HypeMeterPage() {
     return <ResultsView term={term} data={result} onReset={handleReset} />;
   }
 
-  return <LandingView onMeasure={handleMeasure} />;
+  return <LandingView suggestions={suggestions} onMeasure={handleMeasure} />;
 }

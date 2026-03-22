@@ -30,17 +30,23 @@ export function AnalyzingView({ term }: AnalyzingViewProps) {
     <div className="flex flex-col items-center justify-center min-h-screen px-4 dot-grid">
       <div className="flex flex-col items-center gap-10 max-w-md w-full">
         <div className="relative w-48 h-48">
-          <div className="absolute inset-0 rounded-full border-2 border-primary/10 animate-pulse" />
+          <div className="absolute inset-0 rounded-full border-2 border-primary/18 animate-pulse" />
           <div
-            className="absolute inset-4 rounded-full border-2 border-primary/5 animate-pulse"
+            className="absolute inset-4 rounded-full border-2 border-primary/12 animate-pulse"
             style={{ animationDelay: "0.3s" }}
           />
           <div
-            className="absolute inset-8 rounded-full border border-primary/5 animate-pulse"
+            className="absolute inset-8 rounded-full border border-primary/10 animate-pulse"
             style={{ animationDelay: "0.6s" }}
           />
           <div className="absolute inset-0 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            <div className="rounded-full bg-primary/10 p-4 shadow-sm ring-1 ring-primary/15">
+              <Loader2
+                className="w-8 h-8 text-primary animate-spin"
+                strokeWidth={2}
+                aria-hidden
+              />
+            </div>
           </div>
         </div>
 
@@ -75,7 +81,11 @@ export function AnalyzingView({ term }: AnalyzingViewProps) {
                   {isDone ? (
                     <Check className="w-3.5 h-3.5 text-primary" />
                   ) : isActive ? (
-                    <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin" />
+                    <Loader2
+                      className="w-3.5 h-3.5 text-primary/85 animate-spin"
+                      strokeWidth={2}
+                      aria-hidden
+                    />
                   ) : (
                     <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
                   )}

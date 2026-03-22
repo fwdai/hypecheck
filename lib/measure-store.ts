@@ -6,6 +6,59 @@ import {
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
+/** Shown when Supabase is off or there is not enough query history yet. */
+const DEFAULT_LANDING_SUGGESTIONS = [
+  "AI Agents",
+  "OpenClaw",
+  "AGI",
+  "Web3",
+  "Quantum Computing",
+  "MCP Servers",
+  "Vibe Coding",
+  "Rust",
+];
+
+/**
+ * Most frequently submitted queries (by normalized_query), using the latest
+ * raw_query string in each group as the chip label. Requires migration
+ * `get_top_queries`; falls back to defaults when DB is empty or unavailable.
+ */
+export async function getTopTrendingQueries(
+  limit = 10,
+): Promise<string[]> {
+  const capped = Math.min(50, Math.max(1, Math.floor(limit)));
+  if (!isSupabaseServiceConfigured()) {
+    return DEFAULT_LANDING_SUGGESTIONS.slice(0, capped);
+  }
+
+  const supabase = getServiceSupabase();
+  const { data, error } = await supabase.rpc("get_top_queries", {
+    p_limit: capped,
+  });
+
+  if (error) {
+    console.error(
+      "[measure-store] get_top_queries",
+      error.message,
+      error.details ?? "",
+      error.hint ?? "",
+    );
+    return DEFAULT_LANDING_SUGGESTIONS.slice(0, capped);
+  }
+
+  const rows = data as { display_query: string; query_count: number }[] | null;
+  const labels =
+    rows
+      ?.map((r) => r.display_query?.trim())
+      .filter((s): s is string => Boolean(s)) ?? [];
+
+  if (labels.length === 0) {
+    return DEFAULT_LANDING_SUGGESTIONS.slice(0, capped);
+  }
+
+  return labels.slice(0, capped);
+}
+
 export async function findCachedReport(
   normalizedKey: string,
 ): Promise<{ reportId: string; analysis: ParsedHypeAnalysis } | null> {

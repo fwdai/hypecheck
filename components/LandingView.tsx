@@ -5,22 +5,12 @@ import { Search, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const SUGGESTIONS = [
-  "AI Agents",
-  "OpenClaw",
-  "AGI",
-  "Web3",
-  "Quantum Computing",
-  "MCP Servers",
-  "Vibe Coding",
-  "Rust",
-];
-
 interface LandingViewProps {
+  suggestions: string[];
   onMeasure: (term: string) => void;
 }
 
-export function LandingView({ onMeasure }: LandingViewProps) {
+export function LandingView({ suggestions, onMeasure }: LandingViewProps) {
   const [term, setTerm] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -92,7 +82,7 @@ export function LandingView({ onMeasure }: LandingViewProps) {
         </form>
 
         <div className="flex flex-wrap justify-center gap-2 animate-fade-up-delay-2">
-          {SUGGESTIONS.map((s) => (
+          {suggestions.map((s) => (
             <Button
               key={s}
               type="button"
@@ -106,14 +96,13 @@ export function LandingView({ onMeasure }: LandingViewProps) {
           ))}
         </div>
 
-        <p className="text-muted-foreground/40 text-xs font-mono animate-fade-up-delay-3 text-center">
+        <div className="text-muted-foreground/40 text-xs font-mono animate-fade-up-delay-3 text-center">
           <div className="mb-4">Powered by AI · Not financial advice</div>
           <div>
             Assessed by the same technology being assessed. Make of that what
             you will.
           </div>
-        </p>
-        <p></p>
+        </div>
       </div>
     </div>
   );
