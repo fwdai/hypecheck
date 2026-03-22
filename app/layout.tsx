@@ -14,9 +14,18 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HYPECHECK",
+  title: "AI Hype Checker — Is It Real or Overhyped? | HypeCheck",
   description:
-    "Measure the hype level of any technology or concept with AI-powered analysis.",
+    "Type any AI technology and get an instant honest breakdown — hype score, what actually works, what's inflated, and a LinkedIn reality check. No BS.",
+  keywords: [
+    "AI hype checker",
+    "AI reality check",
+    "AI hype vs reality",
+    "hype score AI",
+    "is AI overhyped",
+    "AI claims reality check",
+    "LinkedIn AI hype detector",
+  ],
 };
 
 export default function RootLayout({
