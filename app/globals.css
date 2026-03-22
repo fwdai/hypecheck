@@ -51,39 +51,48 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Hypometer light theme — cool paper, teal accent */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --background: hsl(210 40% 98%);
+  --foreground: hsl(222 47% 11%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(222 47% 11%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(222 47% 11%);
+  --primary: hsl(173 58% 39%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(214 32% 94%);
+  --secondary-foreground: hsl(222 37% 18%);
+  --muted: hsl(214 32% 93%);
+  --muted-foreground: hsl(215 16% 42%);
+  --accent: hsl(173 45% 94%);
+  --accent-foreground: hsl(173 58% 28%);
+  --destructive: hsl(0 72% 48%);
+  --border: hsl(214 24% 88%);
+  --input: hsl(214 24% 88%);
+  --ring: hsl(173 58% 39%);
+  --success: 152 55% 36%;
+  --hype: 0 72% 48%;
+  --hype-mid: 35 90% 48%;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: hsl(210 40% 98%);
+  --sidebar-foreground: hsl(222 47% 11%);
+  --sidebar-primary: hsl(173 58% 39%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(214 32% 94%);
+  --sidebar-accent-foreground: hsl(222 37% 18%);
+  --sidebar-border: hsl(214 24% 88%);
+  --sidebar-ring: hsl(173 58% 39%);
+  --gauge-track: hsl(214 28% 88% / 0.85);
+  --gauge-tick: hsl(215 18% 58% / 0.45);
+  --gauge-label-muted: hsl(215 16% 42% / 0.85);
+  --gauge-label-real: hsl(152 55% 34% / 0.85);
+  --gauge-label-hype: hsl(0 72% 46% / 0.85);
 }
 
 /* Hypometer dark theme (ported from .lovable) */
@@ -122,6 +131,11 @@
   --sidebar-accent-foreground: hsl(210 20% 85%);
   --sidebar-border: hsl(220 15% 16%);
   --sidebar-ring: hsl(175 80% 50%);
+  --gauge-track: rgba(255, 255, 255, 0.06);
+  --gauge-tick: rgba(255, 255, 255, 0.15);
+  --gauge-label-muted: rgba(255, 255, 255, 0.4);
+  --gauge-label-real: #22c55e80;
+  --gauge-label-hype: #ef444480;
 }
 
 @layer base {

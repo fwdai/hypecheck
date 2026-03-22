@@ -1,6 +1,18 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTheme } from "next-themes";
+
+function readGaugeTokens() {
+  const root = getComputedStyle(document.documentElement);
+  return {
+    track: root.getPropertyValue("--gauge-track").trim(),
+    tick: root.getPropertyValue("--gauge-tick").trim(),
+    labelMuted: root.getPropertyValue("--gauge-label-muted").trim(),
+    labelReal: root.getPropertyValue("--gauge-label-real").trim(),
+    labelHype: root.getPropertyValue("--gauge-label-hype").trim(),
+  };
+}
 
 interface HypeGaugeProps {
   score: number;
@@ -16,12 +28,15 @@ export function HypeGauge({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animatedScore = useRef(0);
   const frameRef = useRef<number>(0);
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
+    const tokens = readGaugeTokens();
 
     const dpr = window.devicePixelRatio || 1;
     canvas.width = size * dpr;
@@ -47,7 +62,7 @@ export function HypeGauge({
 
       ctx.beginPath();
       ctx.arc(cx, cy, radius, startAngle, endAngle);
-      ctx.strokeStyle = "rgba(255,255,255,0.06)";
+      ctx.strokeStyle = tokens.track;
       ctx.lineWidth = 12;
       ctx.lineCap = "round";
       ctx.stroke();
@@ -66,7 +81,7 @@ export function HypeGauge({
           cx + outerR * Math.cos(angle),
           cy + outerR * Math.sin(angle),
         );
-        ctx.strokeStyle = "rgba(255,255,255,0.15)";
+        ctx.strokeStyle = tokens.tick;
         ctx.lineWidth = isMajor ? 2 : 1;
         ctx.stroke();
       }
@@ -116,16 +131,16 @@ export function HypeGauge({
       ctx.fillText(Math.round(currentScore).toString(), cx, cy - 8);
 
       ctx.font = `500 ${size * 0.055}px 'Inter', sans-serif`;
-      ctx.fillStyle = "rgba(255,255,255,0.4)";
+      ctx.fillStyle = tokens.labelMuted;
       ctx.fillText("HYPE SCORE", cx, cy + size * 0.1);
 
       ctx.font = `500 ${size * 0.042}px 'JetBrains Mono', monospace`;
-      ctx.fillStyle = "#22c55e80";
+      ctx.fillStyle = tokens.labelReal;
       const lx = cx + (radius + 24) * Math.cos(startAngle);
       const ly = cy + (radius + 24) * Math.sin(startAngle);
       ctx.fillText("REAL", lx + 10, ly);
 
-      ctx.fillStyle = "#ef444480";
+      ctx.fillStyle = tokens.labelHype;
       const rx = cx + (radius + 24) * Math.cos(endAngle);
       const ry = cy + (radius + 24) * Math.sin(endAngle);
       ctx.fillText("HYPE", rx - 10, ry);
@@ -149,7 +164,7 @@ export function HypeGauge({
     }
 
     return () => cancelAnimationFrame(frameRef.current);
-  }, [score, size, animated]);
+  }, [score, size, animated, resolvedTheme]);
 
   return (
     <canvas
