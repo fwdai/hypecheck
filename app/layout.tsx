@@ -16,10 +16,20 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "http://localhost:3000");
+
+const title = "AI Hype Checker — Is It Real or Overhyped? | HypeCheck";
+const description =
+  "Enter any AI technology and get an instant, honest breakdown — hype score, what actually works, what's inflated, and a LinkedIn reality check. No BS.";
+
 export const metadata: Metadata = {
-  title: "AI Hype Checker — Is It Real or Overhyped? | HypeCheck",
-  description:
-    "Enter any AI technology and get an instant, honest breakdown — hype score, what actually works, what's inflated, and a LinkedIn reality check. No BS.",
+  metadataBase: new URL(siteUrl),
+  title,
+  description,
   keywords: [
     "AI hype checker",
     "AI reality check",
@@ -29,6 +39,26 @@ export const metadata: Metadata = {
     "AI claims reality check",
     "LinkedIn AI hype detector",
   ],
+  openGraph: {
+    title,
+    description,
+    url: "/",
+    siteName: "hypecheck.fyi",
+    locale: "en_US",
+    type: "website",
+    images: [
+      {
+        url: "/hypecheck.png",
+        alt: "HypeCheck — AI hype vs reality",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+    images: ["/hypecheck.png"],
+  },
 };
 
 export default function RootLayout({
