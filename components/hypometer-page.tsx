@@ -19,7 +19,7 @@ export function HypometerPage() {
     setResult(null);
 
     try {
-      const res = await fetch("/api/analyze-hype", {
+      const res = await fetch("/api/measure", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

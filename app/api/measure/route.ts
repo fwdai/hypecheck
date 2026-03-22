@@ -129,7 +129,7 @@ export async function POST(req: Request) {
     } catch (e: unknown) {
       const message =
         e instanceof Error ? e.message : "Upstream model request failed.";
-      console.error("[analyze-hype]", e);
+      console.error("[measure]", e);
       return NextResponse.json({ error: message }, { status: 502 });
     }
 
