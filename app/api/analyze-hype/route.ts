@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { zodResponseFormat } from "openai/helpers/zod";
 import {
-  hypeAnalysisSchema,
-  LIFECYCLE_STAGES,
+  LIFECYCLE_STAGE_INDEX_HELP,
+  llmHypeAnalysisSchema,
+  parsedHypeAnalysisFromLlm,
   type ParsedHypeAnalysis,
 } from "@/lib/hype-analysis-schema";
 import { getClientIp } from "@/lib/get-client-ip";
@@ -30,7 +32,7 @@ Respond with a single JSON object only (no markdown, no prose outside JSON) usin
 - maturityLevel: short phrase (e.g. "Early research", "Production-ready niche")
 - marketReadiness: short phrase
 - stayingPower: short phrase (will it last vs fade)
-- lifecycleStage: exactly one of: ${LIFECYCLE_STAGES.map((s) => JSON.stringify(s)).join(", ")}
+- lifecycleStageIndex: integer 0-4 for Gartner-style hype cycle position (${LIFECYCLE_STAGE_INDEX_HELP})
 - timelinePrediction: one sentence on how the narrative may evolve in ~1-3 years
 - hypDrivers: string array of 3-6 actor types or forces driving hype (e.g. "VC marketing", "Tech Twitter")
 - comparables: array of 2-4 objects { "name": string, "outcome": string } comparing to past tech cycles
@@ -42,9 +44,8 @@ async function generateWithOpenAI(
   term: string,
   model: string,
 ): Promise<ParsedHypeAnalysis> {
-  const completion = await openai.chat.completions.create({
+  const completion = await openai.chat.completions.parse({
     model,
-    response_format: { type: "json_object" },
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
       {
@@ -52,23 +53,16 @@ async function generateWithOpenAI(
         content: `Analyze and return JSON only for this term: ${JSON.stringify(term)}`,
       },
     ],
+    response_format: zodResponseFormat(llmHypeAnalysisSchema, "hype_analysis"),
   });
-  const raw = completion.choices[0]?.message?.content;
-  if (!raw) {
-    throw new Error("No response from the model.");
+  const message = completion.choices[0]?.message;
+  if (message?.refusal) {
+    throw new Error("Model refused to produce an analysis.");
   }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw) as unknown;
-  } catch {
-    throw new Error("Model returned invalid JSON.");
+  if (!message?.parsed) {
+    throw new Error("No parsed response from the model.");
   }
-  const result = hypeAnalysisSchema.safeParse(parsed);
-  if (!result.success) {
-    console.error("[analyze-hype] schema mismatch", result.error.flatten());
-    throw new Error("Model response did not match the expected format.");
-  }
-  return result.data;
+  return parsedHypeAnalysisFromLlm(message.parsed);
 }
 
 export async function POST(req: Request) {
