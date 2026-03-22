@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import Script from "next/script";
 import { Providers } from "@/components/providers";
 import "./globals.css";
+
+const GA_MEASUREMENT_ID = "G-228G6QW78L";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -16,7 +19,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "AI Hype Checker — Is It Real or Overhyped? | HypeCheck",
   description:
-    "Type any AI technology and get an instant honest breakdown — hype score, what actually works, what's inflated, and a LinkedIn reality check. No BS.",
+    "Enter any AI technology and get an instant, honest breakdown — hype score, what actually works, what's inflated, and a LinkedIn reality check. No BS.",
   keywords: [
     "AI hype checker",
     "AI reality check",
@@ -41,6 +44,18 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans">
         <Providers>{children}</Providers>
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_MEASUREMENT_ID}');
+          `}
+        </Script>
       </body>
     </html>
   );
