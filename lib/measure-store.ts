@@ -84,7 +84,8 @@ export async function createTerm(displayName: string): Promise<Term | null> {
 }
 
 /**
- * Fuzzy-match user input to a canonical term (trigram similarity > 0.3).
+ * Fuzzy-match user input to a canonical term (trigram similarity > 0.3 and
+ * normalized Levenshtein distance ≤ 0.36, so shared-prefix false positives are rejected).
  * Returns null when no row qualifies or Supabase is unavailable.
  */
 export async function matchTermBySimilarity(
