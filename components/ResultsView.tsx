@@ -265,13 +265,13 @@ export function ResultsView({ term, data, onReset }: ResultsViewProps) {
           Check Another
         </Button>
 
-        <p className="text-muted-foreground/30 text-xs font-mono pb-8 text-center">
+        <div className="text-muted-foreground/30 text-xs font-mono pb-8 text-center">
           <div className="mb-4">Powered by AI · Not financial advice</div>
           <div>
             Assessed by the same technology being assessed. Make of that what
             you will.
           </div>
-        </p>
+        </div>
       </div>
     </div>
   );
