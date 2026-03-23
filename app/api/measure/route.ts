@@ -47,7 +47,10 @@ export async function POST(req: Request) {
   const cached = await findRecentReportForTerm(termRecord.id);
   if (cached) {
     await logQuery();
-    return NextResponse.json(cached.analysis);
+    return NextResponse.json({
+      slug: termRecord.slug,
+      termName: termRecord.name,
+    });
   }
 
   let analysis;
@@ -69,5 +72,8 @@ export async function POST(req: Request) {
 
   await logQuery();
 
-  return NextResponse.json(analysis);
+  return NextResponse.json({
+    slug: termRecord.slug,
+    termName: termRecord.name,
+  });
 }

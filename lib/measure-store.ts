@@ -124,6 +124,48 @@ export async function matchTermBySimilarity(
   };
 }
 
+async function getTermBySlug(slug: string): Promise<Term | null> {
+  if (!isSupabaseServiceConfigured()) return null;
+
+  const s = slug.trim();
+  if (!s) return null;
+
+  const supabase = getServiceSupabase();
+  const { data, error } = await supabase
+    .from("terms")
+    .select("id, name, slug")
+    .eq("slug", s)
+    .maybeSingle();
+
+  if (error) {
+    console.error(
+      "[measure-store] getTermBySlug",
+      error.message,
+      error.details ?? "",
+      error.hint ?? "",
+    );
+    return null;
+  }
+
+  if (!data) return null;
+  return data as Term;
+}
+
+/**
+ * Canonical term label + fresh report payload for `/hype/[slug]` (SSR).
+ */
+export async function getHypeReportBySlug(
+  slug: string,
+): Promise<{ termName: string; analysis: ParsedHypeAnalysis } | null> {
+  const term = await getTermBySlug(slug);
+  if (!term) return null;
+
+  const report = await findRecentReportForTerm(term.id);
+  if (!report) return null;
+
+  return { termName: term.name, analysis: report.analysis };
+}
+
 /**
  * Latest non-expired report for a term (at most one row per term).
  */

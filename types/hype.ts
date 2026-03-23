@@ -1,4 +1,4 @@
-export type AppState = "landing" | "analyzing" | "results";
+export type AppState = "landing" | "analyzing";
 
 export interface Comparable {
   name: string;
