@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 
+import type { HypeStatsSnapshot } from "@/lib/ai/stats-snapshot-prompt";
 import {
   hypeAnalysisSchema,
   type ParsedHypeAnalysis,
@@ -284,6 +285,39 @@ export async function upsertReportFromLlm(params: {
     return null;
   }
   return data?.id ?? null;
+}
+
+/**
+ * Persists API stats (Google Trends, GitHub) for a term. Upserts on `term_id`.
+ * No-op when Supabase is not configured.
+ */
+export async function upsertWeeklyTermStats(params: {
+  termId: string;
+  snapshot: HypeStatsSnapshot;
+}): Promise<void> {
+  if (!isSupabaseServiceConfigured()) return;
+
+  const supabase = getServiceSupabase();
+  const fetchedAt = new Date().toISOString();
+
+  const { error } = await supabase.from("weekly_term_stats").upsert(
+    {
+      term_id: params.termId,
+      google_trends: params.snapshot.googleTrends,
+      github: params.snapshot.github,
+      fetched_at: fetchedAt,
+    },
+    { onConflict: "term_id" },
+  );
+
+  if (error) {
+    console.error(
+      "[measure-store] upsertWeeklyTermStats",
+      error.message,
+      error.details ?? "",
+      error.hint ?? "",
+    );
+  }
 }
 
 export async function recordQuery(params: {

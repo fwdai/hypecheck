@@ -1,5 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
 import {
+  formatStatsSnapshotForPrompt,
+  type HypeStatsSnapshot,
+} from "@/lib/ai/stats-snapshot-prompt";
+import {
   LIFECYCLE_STAGE_INDEX_HELP,
   llmHypeAnalysisSchema,
   parsedHypeAnalysisFromLlm,
@@ -59,7 +63,9 @@ When given a technology or AI term, respond ONLY with a raw JSON object. No prea
   "realScore": <integer, always equals 100 - hypeScore>,
 }
 
-Be honest, specific, and slightly dry in tone. Use concrete examples and evidence. Don't hedge excessively. Base assessments on what's actually deployed and working versus what's being claimed.`;
+Be honest, specific, and slightly dry in tone. Use concrete examples and evidence. Don't hedge excessively. Base assessments on what's actually deployed and working versus what's being claimed.
+
+When the user message includes a "STATS SNAPSHOT" section, treat those metrics as primary quantitative evidence. Explicitly reconcile them with qualitative judgment in reasoning (e.g. high search interest vs low open-source footprint suggests narrative ahead of engineering). If the snapshot is missing or empty, rely on general knowledge as before.`;
 
 function extractAssistantText(
   content: Anthropic.Messages.Message["content"],
@@ -88,9 +94,15 @@ function parseJsonObjectFromModelText(text: string): unknown {
 
 export async function generateHypeAnalysis(
   term: string,
+  statsSnapshot: HypeStatsSnapshot = { googleTrends: null, github: null },
 ): Promise<{ analysis: ParsedHypeAnalysis; model: string }> {
   const model = getResolvedAnthropicModel();
   const client = getAnthropicClient();
+
+  const statsBlock = formatStatsSnapshotForPrompt(statsSnapshot);
+  const userBody = statsBlock
+    ? `${statsBlock}Analyze and return JSON only for this term: ${JSON.stringify(term)}`
+    : `Analyze and return JSON only for this term: ${JSON.stringify(term)}`;
 
   const response = await client.messages.create({
     model,
@@ -99,7 +111,7 @@ export async function generateHypeAnalysis(
     messages: [
       {
         role: "user",
-        content: `Analyze and return JSON only for this term: ${JSON.stringify(term)}`,
+        content: userBody,
       },
     ],
   });

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateHypeAnalysis } from "@/lib/ai/generate-hype-analysis";
+import { fetchHypeStatsSnapshot } from "@/lib/stats";
 import { getClientIp } from "@/lib/get-client-ip";
 import { hashIp } from "@/lib/hash-ip";
 import {
@@ -8,11 +9,13 @@ import {
   matchTermBySimilarity,
   recordQuery,
   upsertReportFromLlm,
+  upsertWeeklyTermStats,
 } from "@/lib/measure-store";
 import { parseMeasureRequestBody } from "@/lib/measure-request-body";
 import { normalizeQuery } from "@/lib/normalize-query";
 
 export const maxDuration = 60;
+export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   const parsed = await parseMeasureRequestBody(req);
@@ -56,7 +59,15 @@ export async function POST(req: Request) {
   let analysis;
   let model: string;
   try {
-    ({ analysis, model } = await generateHypeAnalysis(termRecord.name));
+    const statsSnapshot = await fetchHypeStatsSnapshot(termRecord.name);
+    await upsertWeeklyTermStats({
+      termId: termRecord.id,
+      snapshot: statsSnapshot,
+    });
+    ({ analysis, model } = await generateHypeAnalysis(
+      termRecord.name,
+      statsSnapshot,
+    ));
   } catch (e: unknown) {
     const message =
       e instanceof Error ? e.message : "Upstream model request failed.";

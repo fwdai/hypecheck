@@ -24,6 +24,7 @@
   },
   "include": [
     "next-env.d.ts",
+    "types/google-trends-api.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
