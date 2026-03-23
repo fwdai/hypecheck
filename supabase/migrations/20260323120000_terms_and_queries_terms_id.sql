@@ -21,6 +21,9 @@ CREATE INDEX terms_name_idx ON public.terms (name);
 ALTER TABLE public.queries
   ADD COLUMN term_id uuid REFERENCES public.terms (id) ON DELETE SET NULL;
 
+ALTER TABLE public.reports
+  ADD COLUMN term_id uuid REFERENCES public.reports (id) ON DELETE SET NULL;
+
 COMMENT ON COLUMN public.queries.term_id IS 'Resolved canonical term when the raw query maps to a known term; NULL if unmatched or not yet resolved.';
 
 CREATE INDEX queries_term_id_idx ON public.queries (term_id);

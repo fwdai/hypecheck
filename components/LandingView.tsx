@@ -64,6 +64,7 @@ export function LandingView({ suggestions, onMeasure }: LandingViewProps) {
               <Input
                 id="landing-search"
                 type="text"
+                maxLength={60}
                 value={term}
                 onChange={(e) => setTerm(e.target.value)}
                 placeholder="Enter any technology or concept..."
