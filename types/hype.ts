@@ -1,3 +1,5 @@
+import type { HypeCategory } from "@/lib/hype-analysis-schema";
+
 export type AppState = "landing" | "analyzing";
 
 export interface Comparable {
@@ -6,8 +8,12 @@ export interface Comparable {
 }
 
 export interface HypeAnalysis {
+  term: string;
+  whatIsReal: string;
+  whatIsHype: string;
   hypeScore: number;
   verdict: string;
+  realScore: number;
   realValuePercent: number;
   whatsReal: string[];
   whatsHype: string[];
@@ -17,6 +23,10 @@ export interface HypeAnalysis {
   stayingPower: string;
   lifecycleStage: string;
   timelinePrediction: string;
-  hypDrivers: string[];
+  timelineReality: string;
+  linkedinVersion: string;
+  realTakeaway: string;
+  category: HypeCategory;
+  hypeDrivers: string[];
   comparables: Comparable[];
 }

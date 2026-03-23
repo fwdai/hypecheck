@@ -1,5 +1,4 @@
-import OpenAI from "openai";
-import { zodResponseFormat } from "openai/helpers/zod";
+import Anthropic from "@anthropic-ai/sdk";
 import {
   LIFECYCLE_STAGE_INDEX_HELP,
   llmHypeAnalysisSchema,
@@ -7,74 +6,122 @@ import {
   type ParsedHypeAnalysis,
 } from "@/lib/hype-analysis-schema";
 
-export const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
-
-export class OpenAiNotConfiguredError extends Error {
+export class AnthropicNotConfiguredError extends Error {
   constructor() {
-    super("Server misconfiguration: OPENAI_API_KEY is not set.");
-    this.name = "OpenAiNotConfiguredError";
+    super("Server misconfiguration: ANTHROPIC_API_KEY is not set.");
+    this.name = "AnthropicNotConfiguredError";
   }
 }
 
-export function isOpenAiConfigured(): boolean {
-  return Boolean(process.env.OPENAI_API_KEY?.trim());
+export function isAnthropicConfigured(): boolean {
+  return Boolean(process.env.ANTHROPIC_API_KEY?.trim());
 }
 
-export function getResolvedOpenAiModel(): string {
-  return process.env.OPENAI_MODEL?.trim() || DEFAULT_OPENAI_MODEL;
+export function getResolvedAnthropicModel(): string {
+  const model = process.env.ANTHROPIC_MODEL?.trim();
+  if (!model) {
+    throw new Error("Server misconfiguration: ANTHROPIC_MODEL is not set.");
+  }
+  return model;
 }
 
-function getOpenAiClient(): OpenAI {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
+function getAnthropicClient(): Anthropic {
+  const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
   if (!apiKey) {
-    throw new OpenAiNotConfiguredError();
+    throw new AnthropicNotConfiguredError();
   }
-  return new OpenAI({ apiKey });
+  return new Anthropic({ apiKey });
 }
 
-const SYSTEM_PROMPT = `You are a concise technology analyst. Given a user-provided technology, product, or concept, assess how much is substantive "real value" versus marketing/social "hype".
+export const CLAUDE_SYSTEM_PROMPT = `
+You are a brutally honest AI analyst. Your job is to cut through hype and give clear-eyed assessments of AI technologies, tools, and terms.
 
-Respond with a single JSON object only (no markdown, no prose outside JSON) using exactly these keys and types:
-- hypeScore: number from 0-100 (higher = more hype, lower = more grounded)
-- verdict: short punchy label (e.g. "Mostly substance", "Heavy on hype")
-- realValuePercent: number 0-100 (share that is "real"; should roughly complement hype — they need not sum to exactly 100 but should be consistent)
-- whatsReal: string array, 3-5 bullets of concrete facts, adoption, or technical merit
-- whatsHype: string array, 3-5 bullets of overstated claims, buzz, or speculation
-- reasoning: 2-4 sentences tying it together
-- maturityLevel: short phrase (e.g. "Early research", "Production-ready niche")
-- marketReadiness: short phrase
-- stayingPower: short phrase (will it last vs fade)
-- lifecycleStageIndex: integer 0-4 for Gartner-style hype cycle position (${LIFECYCLE_STAGE_INDEX_HELP})
-- timelinePrediction: one sentence on how the narrative may evolve in ~1-3 years
-- hypDrivers: string array of 3-6 actor types or forces driving hype (e.g. "VC marketing", "Tech Twitter")
-- comparables: array of 2-4 objects { "name": string, "outcome": string } comparing to past tech cycles
+When given a technology or AI term, respond ONLY with a raw JSON object. No preamble. No explanation. No markdown. No backticks. No code fences. Start your response with { and end with }. Use this exact structure:
 
-Be opinionated but fair. If the term is ambiguous, state assumptions briefly inside reasoning.`;
+{
+  "term": "the term as understood",
+  "whatIsReal": "<2-3 sentences on what actually works today>",
+  "whatIsHype": "<2-3 sentences on what's inflated, misrepresented, or premature>",
+  "reasoning": "<2-4 sentences tying it together",
+  "maturityLevel": "<short phrase (e.g. "Early research", "Production-ready niche")",
+  "marketReadiness": "<short phrase",
+  "stayingPower": "<short phrase (will it last vs fade)",
+  "lifecycleStageIndex": "<integer 0-4 for Gartner-style hype cycle position (${LIFECYCLE_STAGE_INDEX_HELP})",
+  "timelinePrediction": "<one sentence on how the narrative may evolve in ~1-3 years",
+  "hypeDrivers": "<string array of 3-6 actor types or forces driving hype (e.g. "VC marketing", "Tech Twitter")",
+  "comparables": "<array of 2-4 objects { "name": string, "outcome": string } comparing to past tech cycles",
+  "verdict": "<one punchy phrase verdict. Max 4 words. ex: Pure Hype | Mostly Real | Solid Grounded | Mostly Hype | Pure Real | Solid Hype >",
+  "timelineReality": "<1-2 sentences on when the hype might actually be justified, if ever>",
+  "linkedinVersion": "<a satirical one-liner parody of how this would be described on LinkedIn by a thought leader>",
+  "realTakeaway": "<one sentence someone could actually use to make a decision>",
+  "category": "<one of: Foundation Model | Agent | Tool | Concept | Company | Buzzword | Hardware>",
+  "hypeScore": <integer 0-100, where 100 = pure hype, 0 = fully grounded. Use full scale, don't cluster values around 75 or 50.>,
+  "realScore": <integer, always equals 100 - hypeScore>,
+}
+
+Be honest, specific, and slightly dry in tone. Use concrete examples and evidence. Don't hedge excessively. Base assessments on what's actually deployed and working versus what's being claimed.`;
+
+function extractAssistantText(
+  content: Anthropic.Messages.Message["content"],
+): string {
+  const parts: string[] = [];
+  for (const block of content) {
+    if (block.type === "text") {
+      parts.push(block.text);
+    }
+  }
+  return parts.join("");
+}
+
+/** Parses a JSON object from model text, tolerating optional ```json fences and leading/trailing prose. */
+function parseJsonObjectFromModelText(text: string): unknown {
+  const trimmed = text.trim();
+  const fenced = /^```(?:json)?\s*([\s\S]*?)```$/m.exec(trimmed);
+  const body = fenced ? fenced[1].trim() : trimmed;
+  const first = body.indexOf("{");
+  const last = body.lastIndexOf("}");
+  if (first === -1 || last === -1 || last <= first) {
+    throw new Error("Response did not contain a JSON object.");
+  }
+  return JSON.parse(body.slice(first, last + 1));
+}
 
 export async function generateHypeAnalysis(
   term: string,
 ): Promise<{ analysis: ParsedHypeAnalysis; model: string }> {
-  const model = getResolvedOpenAiModel();
-  const openai = getOpenAiClient();
+  const model = getResolvedAnthropicModel();
+  const client = getAnthropicClient();
 
-  const completion = await openai.chat.completions.parse({
+  const response = await client.messages.create({
     model,
+    max_tokens: 4096,
+    system: CLAUDE_SYSTEM_PROMPT,
     messages: [
-      { role: "system", content: SYSTEM_PROMPT },
       {
         role: "user",
         content: `Analyze and return JSON only for this term: ${JSON.stringify(term)}`,
       },
     ],
-    response_format: zodResponseFormat(llmHypeAnalysisSchema, "hype_analysis"),
   });
-  const message = completion.choices[0]?.message;
-  if (message?.refusal) {
-    throw new Error("Model refused to produce an analysis.");
+
+  const text = extractAssistantText(response.content);
+  if (!text.trim()) {
+    throw new Error("Empty response from the model.");
   }
-  if (!message?.parsed) {
-    throw new Error("No parsed response from the model.");
+
+  let raw: unknown;
+  try {
+    raw = parseJsonObjectFromModelText(text);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    throw new Error(`Failed to parse model JSON: ${message}`);
   }
-  const analysis = parsedHypeAnalysisFromLlm(message.parsed);
+
+  const parsed = llmHypeAnalysisSchema.safeParse(raw);
+  if (!parsed.success) {
+    throw new Error(`Model output failed validation: ${parsed.error.message}`);
+  }
+
+  const analysis = parsedHypeAnalysisFromLlm(parsed.data);
   return { analysis, model };
 }

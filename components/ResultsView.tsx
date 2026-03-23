@@ -219,7 +219,7 @@ export function ResultsView({ term, data, onReset }: ResultsViewProps) {
                 Who&apos;s Driving the Hype
               </h3>
               <div className="flex flex-wrap gap-2">
-                {data.hypDrivers.map((driver, i) => (
+                {data.hypeDrivers.map((driver, i) => (
                   <span
                     key={i}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-hype/5 border border-hype/10 text-sm text-hype"
