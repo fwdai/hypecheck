@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
 import { ResultsPageClient } from "@/components/results-page-client";
 import { getHypeReportBySlug } from "@/lib/measure-store";
@@ -6,15 +6,36 @@ import type { HypeAnalysis } from "@/types/hype";
 
 type Props = { params: Promise<{ slug: string }> };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+// Merge with parent `openGraph`/`twitter` from root layout so OG and Twitter tags update.
+export async function generateMetadata(
+  { params }: Props,
+  parent: ResolvingMetadata,
+): Promise<Metadata> {
   const { slug } = await params;
   const data = await getHypeReportBySlug(slug);
+  const resolvedParent = await parent;
+
   if (!data) {
     return { title: "Not found — HypeCheck" };
   }
+
+  const title = `${data.termName}: ${data.analysis.hypeScore}% Hype — What's Real and What Isn't`;
+  const description = `${data.termName} is ${data.analysis.hypeScore}% hype according to our weekly analysis. ${data.analysis.verdict}. Updated weekly with real data.`;
+
   return {
-    title: `${data.termName}: ${data.analysis.hypeScore}% Hype — What's Real and What Isn't`,
-    description: `${data.termName} is ${data.analysis.hypeScore}% hype according to our weekly analysis. ${data.analysis.verdict}. Updated weekly with real data.`,
+    title,
+    description,
+    openGraph: {
+      ...resolvedParent.openGraph,
+      title,
+      description,
+      url: `/hype/${slug}`,
+    },
+    twitter: {
+      ...resolvedParent.twitter,
+      title,
+      description,
+    },
   };
 }
 
