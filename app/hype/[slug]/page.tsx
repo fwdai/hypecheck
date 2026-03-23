@@ -27,6 +27,9 @@ export default async function HypeSlugPage({ params }: Props) {
     <ResultsPageClient
       term={data.termName}
       data={data.analysis as HypeAnalysis}
+      reportId={data.reportId}
+      agrees={data.agrees}
+      disagrees={data.disagrees}
     />
   );
 }

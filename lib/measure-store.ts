@@ -152,19 +152,132 @@ async function getTermBySlug(slug: string): Promise<Term | null> {
   return data as Term;
 }
 
+export async function getVoteCountsForReport(
+  reportId: string,
+): Promise<{ agrees: number; disagrees: number }> {
+  if (!isSupabaseServiceConfigured()) {
+    return { agrees: 0, disagrees: 0 };
+  }
+
+  const supabase = getServiceSupabase();
+  const { data, error } = await supabase
+    .from("report_votes")
+    .select("vote_type")
+    .eq("report_id", reportId);
+
+  if (error) {
+    console.error(
+      "[measure-store] getVoteCountsForReport",
+      error.message,
+      error.details ?? "",
+      error.hint ?? "",
+    );
+    return { agrees: 0, disagrees: 0 };
+  }
+
+  let agrees = 0;
+  let disagrees = 0;
+  for (const row of data ?? []) {
+    if (row.vote_type === true) agrees++;
+    else if (row.vote_type === false) disagrees++;
+  }
+  return { agrees, disagrees };
+}
+
+export type CastReportVoteResult =
+  | {
+      ok: true;
+      agrees: number;
+      disagrees: number;
+      alreadyVoted: boolean;
+      yourVote?: "agree" | "disagree";
+    }
+  | { ok: false; error: string };
+
+export async function castReportVote(params: {
+  reportId: string;
+  voteType: "agree" | "disagree";
+  visitorSessionId: string;
+}): Promise<CastReportVoteResult> {
+  if (!isSupabaseServiceConfigured()) {
+    return { ok: false, error: "Voting is unavailable." };
+  }
+
+  const sessionId = params.visitorSessionId.trim().slice(0, 128);
+  if (!sessionId) {
+    return { ok: false, error: "Missing session." };
+  }
+
+  const supabase = getServiceSupabase();
+  const { error } = await supabase.from("report_votes").insert({
+    report_id: params.reportId,
+    visitor_session_id: sessionId,
+    vote_type: params.voteType === "agree",
+  });
+
+  if (error) {
+    const code = (error as { code?: string }).code;
+    if (code === "23505") {
+      const { data: row } = await supabase
+        .from("report_votes")
+        .select("vote_type")
+        .eq("report_id", params.reportId)
+        .eq("visitor_session_id", sessionId)
+        .maybeSingle();
+      const counts = await getVoteCountsForReport(params.reportId);
+      const yourVote =
+        row?.vote_type === true
+          ? "agree"
+          : row?.vote_type === false
+            ? "disagree"
+            : undefined;
+      return {
+        ok: true,
+        ...counts,
+        alreadyVoted: true,
+        yourVote,
+      };
+    }
+    console.error(
+      "[measure-store] castReportVote",
+      error.message,
+      error.details ?? "",
+      error.hint ?? "",
+    );
+    return { ok: false, error: "Could not record vote." };
+  }
+
+  const counts = await getVoteCountsForReport(params.reportId);
+  return { ok: true, ...counts, alreadyVoted: false };
+}
+
 /**
  * Canonical term label + fresh report payload for `/hype/[slug]` (SSR).
  */
 export async function getHypeReportBySlug(
   slug: string,
-): Promise<{ termName: string; analysis: ParsedHypeAnalysis } | null> {
+): Promise<{
+  termName: string;
+  analysis: ParsedHypeAnalysis;
+  reportId: string;
+  agrees: number;
+  disagrees: number;
+} | null> {
   const term = await getTermBySlug(slug);
   if (!term) return null;
 
   const report = await findRecentReportForTerm(term.id);
   if (!report) return null;
 
-  return { termName: term.name, analysis: report.analysis };
+  const { agrees, disagrees } = await getVoteCountsForReport(report.reportId);
+
+  return {
+    termName: term.name,
+    analysis: report.analysis,
+    reportId: report.reportId,
+    agrees,
+    disagrees,
+  };
 }
 
 /**

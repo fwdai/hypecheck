@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { HypeGauge } from "@/components/HypeGauge";
+import { VoteBlock } from "@/components/VoteBlock";
 import { Button } from "@/components/ui/button";
 import {
   ChevronDown,
@@ -20,10 +21,20 @@ import type { HypeAnalysis } from "@/types/hype";
 interface ResultsViewProps {
   term: string;
   data: HypeAnalysis;
+  reportId: string;
+  agrees: number;
+  disagrees: number;
   onReset: () => void;
 }
 
-export function ResultsView({ term, data, onReset }: ResultsViewProps) {
+export function ResultsView({
+  term,
+  data,
+  reportId,
+  agrees,
+  disagrees,
+  onReset,
+}: ResultsViewProps) {
   const [expanded, setExpanded] = useState(false);
   const hypePercent = 100 - data.realValuePercent;
 
@@ -48,7 +59,7 @@ export function ResultsView({ term, data, onReset }: ResultsViewProps) {
           <HypeGauge score={data.hypeScore} size={260} />
         </div>
 
-        <div className="text-center animate-fade-up-delay-2 -mt-4">
+        <div className="flex flex-col items-center gap-4 animate-fade-up-delay-2 -mt-4">
           <div
             className={`inline-block px-5 py-2 rounded-full text-sm font-bold tracking-wide uppercase ${
               data.hypeScore <= 30
@@ -60,6 +71,11 @@ export function ResultsView({ term, data, onReset }: ResultsViewProps) {
           >
             {data.verdict}
           </div>
+          <VoteBlock
+            reportId={reportId}
+            initialAgrees={agrees}
+            initialDisagrees={disagrees}
+          />
         </div>
 
         <div className="w-full max-w-md animate-fade-up-delay-3">
