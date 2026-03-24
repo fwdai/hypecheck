@@ -32,7 +32,17 @@ export function HypeMeterPage({ suggestions }: HypeMeterPageProps) {
           }),
         });
 
-        const data: unknown = await res.json();
+        const raw = await res.text();
+        let data: unknown;
+        try {
+          data = raw ? JSON.parse(raw) : null;
+        } catch {
+          throw new Error(
+            res.ok
+              ? "Invalid response from server."
+              : "Analysis failed. Please try again.",
+          );
+        }
 
         if (!res.ok) {
           const err =

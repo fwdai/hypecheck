@@ -67,8 +67,18 @@ const comparableSchema = z.object({
   outcome: z.string(),
 });
 
-const stringArrayField = z.preprocess((val) => {
-  if (typeof val === "string") return [val];
+const HYPE_DRIVERS_FALLBACK = "General market and media attention";
+
+/** LLM sometimes returns [] or all-blank strings; coerce so validation and UI stay valid. */
+const hypeDriversField = z.preprocess((val) => {
+  if (typeof val === "string") {
+    const s = val.trim();
+    return s ? [s] : [HYPE_DRIVERS_FALLBACK];
+  }
+  if (Array.isArray(val)) {
+    const arr = val.map((x) => String(x).trim()).filter(Boolean);
+    return arr.length ? arr : [HYPE_DRIVERS_FALLBACK];
+  }
   return val;
 }, z.array(z.string()).min(1));
 
@@ -91,7 +101,7 @@ export const hypeAnalysisSchema = z.object({
   stayingPower: z.string().min(1),
   lifecycleStage: lifecycleStageField,
   timelinePrediction: z.string().min(1),
-  hypeDrivers: stringArrayField,
+  hypeDrivers: hypeDriversField,
   comparables: z.array(comparableSchema).min(1),
   verdict: z.string().min(1),
   timelineReality: z.string().min(1),
@@ -121,7 +131,7 @@ export const llmHypeAnalysisSchema = z.object({
   stayingPower: z.string().min(1),
   lifecycleStageIndex: lifecycleIndexField,
   timelinePrediction: z.string().min(1),
-  hypeDrivers: stringArrayField,
+  hypeDrivers: hypeDriversField,
   comparables: z.array(comparableSchema).min(1),
   verdict: z.string().min(1),
   timelineReality: z.string().min(1),
