@@ -1,5 +1,8 @@
 import { randomBytes } from "node:crypto";
 
+import { UTCDate } from "@date-fns/utc";
+import { addWeeks, startOfWeek } from "date-fns";
+
 import type { HypeStatsSnapshot } from "@/lib/ai/stats-snapshot-prompt";
 import {
   hypeAnalysisSchema,
@@ -11,7 +14,22 @@ import {
   isSupabaseServiceConfigured,
 } from "@/lib/supabase/service";
 
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+/** End of the weekly report window: next Monday 00:00 UTC (exclusive; cache invalid after this instant). */
+function getReportExpiresAtUTC(d: Date): Date {
+  const utc = new UTCDate(d.getTime());
+  return addWeeks(startOfWeek(utc, { weekStartsOn: 1 }), 1);
+}
+
+function getReportExpiresAtISO(d: Date): string {
+  return getReportExpiresAtUTC(d).toISOString();
+}
+
+/** True when `expires_at` matches this calendar week's boundary (sliding-window rows fail). */
+function isExpiresAtForCurrentWeek(expiresAtIso: string, now: Date): boolean {
+  const expected = getReportExpiresAtUTC(now).getTime();
+  const actual = new Date(expiresAtIso).getTime();
+  return Math.abs(expected - actual) < 1000;
+}
 
 function parseReportRow(
   row: { id: string; payload: unknown } | null,
@@ -290,13 +308,14 @@ export async function findRecentReportForTerm(
   if (!isSupabaseServiceConfigured()) return null;
 
   const supabase = getServiceSupabase();
-  const now = new Date().toISOString();
+  const now = new Date();
+  const nowIso = now.toISOString();
 
   const { data, error } = await supabase
     .from("reports")
-    .select("id, payload")
+    .select("id, payload, expires_at")
     .eq("term_id", termId)
-    .gt("expires_at", now)
+    .gt("expires_at", nowIso)
     .maybeSingle();
 
   if (error) {
@@ -309,7 +328,18 @@ export async function findRecentReportForTerm(
     return null;
   }
 
-  return parseReportRow(data);
+  if (data) {
+    if (
+      typeof data.expires_at !== "string" ||
+      !isExpiresAtForCurrentWeek(data.expires_at, now)
+    ) {
+      return null;
+    }
+  }
+
+  return parseReportRow(
+    data ? { id: data.id, payload: data.payload } : null,
+  );
 }
 
 /** Shown when Supabase is off or there is not enough query history yet. */
@@ -371,7 +401,7 @@ export async function upsertReportFromLlm(params: {
   if (!isSupabaseServiceConfigured()) return null;
 
   const supabase = getServiceSupabase();
-  const expiresAt = new Date(Date.now() + WEEK_MS).toISOString();
+  const expiresAt = getReportExpiresAtISO(new Date());
   const refreshedAt = new Date().toISOString();
 
   const { data, error } = await supabase
