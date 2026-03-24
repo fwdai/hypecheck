@@ -56,6 +56,18 @@ export function HypeMeterPage({ suggestions }: HypeMeterPageProps) {
         }
 
         if (
+          typeof data === "object" &&
+          data !== null &&
+          "notAThing" in data &&
+          (data as { notAThing: unknown }).notAThing === true
+        ) {
+          router.push(
+            `/not-a-thing?q=${encodeURIComponent(searchTerm.trim())}`,
+          );
+          return;
+        }
+
+        if (
           typeof data !== "object" ||
           data === null ||
           !("slug" in data) ||

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isQueryAnalyzable } from "@/lib/ai/classify-query-analyzable";
 import { generateHypeAnalysis } from "@/lib/ai/generate-hype-analysis";
 import { fetchHypeStatsSnapshot } from "@/lib/stats";
 import { getClientIp } from "@/lib/get-client-ip";
@@ -24,7 +25,28 @@ export async function POST(req: Request) {
   }
   const { term, visitorSessionId } = parsed;
 
+  const userAgent = req.headers.get("user-agent");
+  const clientIp = getClientIp(req);
+  const ipHash = hashIp(clientIp);
+
   const match = await matchTermBySimilarity(term);
+
+  if (!match) {
+    const analyzable = await isQueryAnalyzable(term);
+    if (!analyzable) {
+      await recordQuery({
+        rawQuery: term,
+        normalizedQuery: normalizeQuery(term),
+        visitorSessionId,
+        userAgent,
+        clientIp,
+        ipHash,
+        termId: null,
+      });
+      return NextResponse.json({ notAThing: true as const });
+    }
+  }
+
   const termRecord = match ?? (await createTerm(term));
 
   if (!termRecord) {
@@ -34,8 +56,6 @@ export async function POST(req: Request) {
     );
   }
 
-  const userAgent = req.headers.get("user-agent");
-  const clientIp = getClientIp(req);
   const logQuery = () =>
     recordQuery({
       rawQuery: term,
@@ -43,7 +63,7 @@ export async function POST(req: Request) {
       visitorSessionId,
       userAgent,
       clientIp,
-      ipHash: hashIp(clientIp),
+      ipHash,
       termId: termRecord.id,
     });
 
