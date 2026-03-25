@@ -16,7 +16,7 @@ export async function generateMetadata(
   const resolvedParent = await parent;
 
   if (!data) {
-    return { title: "Not found — HypeCheck" };
+    return { title: "Not found — Hypecheck.fyi" };
   }
 
   const title = `${data.termName}: ${data.analysis.hypeScore}% Hype — What's Real and What Isn't`;

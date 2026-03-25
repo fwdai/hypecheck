@@ -1,7 +1,6 @@
+import { subDays } from "date-fns";
 import googleTrends from "google-trends-api";
 import type { HypeStatsSnapshot } from "@/lib/ai/stats-snapshot-prompt";
-
-const TRENDS_MS = 90 * 24 * 60 * 60 * 1000;
 
 function trendDirectionLabel(delta: number): string {
   if (delta > 10) return "Rising fast";
@@ -24,7 +23,7 @@ export async function fetchGoogleTrendsSnapshot(
   if (!keyword) return null;
 
   const endTime = new Date();
-  const startTime = new Date(Date.now() - TRENDS_MS);
+  const startTime = subDays(endTime, 90);
 
   const raw = await googleTrends.interestOverTime({
     keyword,

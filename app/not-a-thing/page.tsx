@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { NotAThingPageClient } from "@/components/not-a-thing-page";
 
 export const metadata: Metadata = {
-  title: "Not a match — HypeCheck",
+  title: "Not a match — Hypecheck.fyi",
   description:
     "That search did not look like a single analyzable technology or product.",
   robots: { index: false, follow: true },

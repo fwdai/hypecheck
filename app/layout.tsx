@@ -22,7 +22,7 @@ const siteUrl =
     ? `https://${process.env.VERCEL_URL}`
     : "http://localhost:3000");
 
-const title = "AI Hype Checker — Is It Real or Overhyped? | HypeCheck";
+const title = "AI Hype Checker — Is It Real or Overhyped?";
 const description =
   "Enter any AI technology and get an instant, honest breakdown — hype score, what actually works, what's inflated, and a LinkedIn reality check. No BS.";
 

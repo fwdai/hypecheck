@@ -44,7 +44,7 @@ export function ResultsView({
         <div className="flex items-center gap-2 animate-fade-up">
           <Zap className="w-4 h-4 text-primary" />
           <span className="font-mono text-xs font-semibold tracking-wider text-primary uppercase">
-            HYPECHECK
+            HYPECHECK.FYI
           </span>
         </div>
 

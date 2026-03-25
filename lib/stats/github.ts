@@ -1,4 +1,5 @@
 import type { HypeStatsSnapshot } from "@/lib/ai/stats-snapshot-prompt";
+import { utcCalendarDateDaysAgo } from "@/lib/helpers/date";
 
 const GITHUB_Q_MAX = 220;
 
@@ -9,10 +10,10 @@ function truncateForGithubQuery(term: string): string {
 }
 
 async function githubRepoSearch(
-  q: string,
+  term: string,
   headers: Record<string, string>,
 ): Promise<number | null> {
-  const url = `https://api.github.com/search/repositories?q=${encodeURIComponent(q)}&sort=updated&per_page=1`;
+  const url = `https://api.github.com/search/repositories?q=${encodeURIComponent(term)}&sort=updated&per_page=1`;
   const res = await fetch(url, {
     headers: {
       Accept: "application/vnd.github+json",
@@ -47,9 +48,7 @@ export async function fetchGithubRepoSnapshot(
     authHeaders.Authorization = `Bearer ${token}`;
   }
 
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split("T")[0];
+  const thirtyDaysAgo = utcCalendarDateDaysAgo(30);
 
   const [totalRepoCount, recent30DayRepoCount] = await Promise.all([
     githubRepoSearch(base, authHeaders),

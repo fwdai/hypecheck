@@ -1,16 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Search, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { LeaderboardPreview } from "@/components/leaderboard-preview";
+import type { LeaderboardPreviewEntry } from "@/lib/data/leaderboard";
 
 interface LandingViewProps {
   suggestions: string[];
+  leaderboardEntries: LeaderboardPreviewEntry[];
   onMeasure: (term: string) => void;
 }
 
-export function LandingView({ suggestions, onMeasure }: LandingViewProps) {
+export function LandingView({
+  suggestions,
+  leaderboardEntries,
+  onMeasure,
+}: LandingViewProps) {
   const [term, setTerm] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -20,14 +28,28 @@ export function LandingView({ suggestions, onMeasure }: LandingViewProps) {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 dot-grid">
+      <nav className="absolute top-2 right-16 p-5 flex items-center gap-4">
+        <Link
+          href="/leaderboard"
+          className="text-xs font-mono text-muted-foreground/60 hover:text-primary transition-colors tracking-wider uppercase"
+        >
+          Leaderboard
+        </Link>
+        <Link
+          href="/about"
+          className="text-xs font-mono text-muted-foreground/60 hover:text-primary transition-colors tracking-wider uppercase"
+        >
+          About
+        </Link>
+      </nav>
       <div className="max-w-2xl w-full flex flex-col items-center gap-10">
-        <div className="flex flex-col items-center gap-3 animate-fade-up">
+        <div className="flex flex-col items-center gap-3 animate-fade-up pt-28">
           <div className="flex items-center gap-2.5 mb-2">
             <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
               <Zap className="w-4 h-4 text-primary" />
             </div>
             <span className="font-mono text-base font-semibold tracking-wider text-primary uppercase pt-0.5">
-              HYPECHECK
+              HYPECHECK.FYI
             </span>
           </div>
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-center leading-tight tracking-tight">
@@ -82,7 +104,7 @@ export function LandingView({ suggestions, onMeasure }: LandingViewProps) {
           </div>
         </form>
 
-        <div className="flex flex-wrap justify-center gap-2 animate-fade-up-delay-2">
+        <div className="flex flex-wrap justify-center gap-2 animate-fade-up-delay-2 pb-12">
           {suggestions.map((s) => (
             <Button
               key={s}
@@ -97,7 +119,9 @@ export function LandingView({ suggestions, onMeasure }: LandingViewProps) {
           ))}
         </div>
 
-        <div className="text-muted-foreground/40 text-xs font-mono animate-fade-up-delay-3 text-center">
+        <LeaderboardPreview entries={leaderboardEntries} />
+
+        <div className="text-muted-foreground/60 text-xs font-mono animate-fade-up-delay-4 text-center">
           <div className="mb-4">Powered by AI · Not financial advice</div>
           <div>
             Assessed by the same technology being assessed. Make of that what

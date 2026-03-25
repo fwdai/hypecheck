@@ -7,12 +7,17 @@ import { LandingView } from "@/components/LandingView";
 import { AnalyzingView } from "@/components/AnalyzingView";
 import { getVisitorSessionId } from "@/lib/visitor-session";
 import type { AppState } from "@/types/hype";
+import { LeaderboardPreviewEntry } from "@/lib/data/leaderboard";
 
 interface HypeMeterPageProps {
   suggestions: string[];
+  leaderboardEntries: LeaderboardPreviewEntry[];
 }
 
-export function HypeMeterPage({ suggestions }: HypeMeterPageProps) {
+export function HypeMeterPage({
+  suggestions,
+  leaderboardEntries,
+}: HypeMeterPageProps) {
   const router = useRouter();
   const [state, setState] = useState<AppState>("landing");
   const [term, setTerm] = useState("");
@@ -93,5 +98,11 @@ export function HypeMeterPage({ suggestions }: HypeMeterPageProps) {
     return <AnalyzingView term={term} />;
   }
 
-  return <LandingView suggestions={suggestions} onMeasure={handleMeasure} />;
+  return (
+    <LandingView
+      suggestions={suggestions}
+      leaderboardEntries={leaderboardEntries}
+      onMeasure={handleMeasure}
+    />
+  );
 }
