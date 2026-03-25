@@ -1,9 +1,7 @@
 import { randomBytes } from "node:crypto";
 
-import { UTCDate } from "@date-fns/utc";
-import { addWeeks, startOfWeek } from "date-fns";
-
 import type { HypeStatsSnapshot } from "@/lib/ai/stats-snapshot-prompt";
+import { currentWeekStartISO } from "@/lib/helpers/date";
 import {
   hypeAnalysisSchema,
   type ParsedHypeAnalysis,
@@ -13,23 +11,6 @@ import {
   getServiceSupabase,
   isSupabaseServiceConfigured,
 } from "@/lib/supabase/service";
-
-/** End of the weekly report window: next Monday 00:00 UTC (exclusive; cache invalid after this instant). */
-function getReportExpiresAtUTC(d: Date): Date {
-  const utc = new UTCDate(d.getTime());
-  return addWeeks(startOfWeek(utc, { weekStartsOn: 1 }), 1);
-}
-
-function getReportExpiresAtISO(d: Date): string {
-  return getReportExpiresAtUTC(d).toISOString();
-}
-
-/** True when `expires_at` matches this calendar week's boundary (sliding-window rows fail). */
-function isExpiresAtForCurrentWeek(expiresAtIso: string, now: Date): boolean {
-  const expected = getReportExpiresAtUTC(now).getTime();
-  const actual = new Date(expiresAtIso).getTime();
-  return Math.abs(expected - actual) < 1000;
-}
 
 function parseReportRow(
   row: { id: string; payload: unknown } | null,
@@ -273,9 +254,7 @@ export async function castReportVote(params: {
 /**
  * Canonical term label + fresh report payload for `/hype/[slug]` (SSR).
  */
-export async function getHypeReportBySlug(
-  slug: string,
-): Promise<{
+export async function getHypeReportBySlug(slug: string): Promise<{
   termName: string;
   analysis: ParsedHypeAnalysis;
   reportId: string;
@@ -300,7 +279,8 @@ export async function getHypeReportBySlug(
 }
 
 /**
- * Latest non-expired report for a term (at most one row per term).
+ * Current-week report for a term: refreshed_at must fall within this calendar week
+ * (since Monday 00:00 UTC). At most one row per term.
  */
 export async function findRecentReportForTerm(
   termId: string,
@@ -308,14 +288,12 @@ export async function findRecentReportForTerm(
   if (!isSupabaseServiceConfigured()) return null;
 
   const supabase = getServiceSupabase();
-  const now = new Date();
-  const nowIso = now.toISOString();
 
   const { data, error } = await supabase
     .from("reports")
-    .select("id, payload, expires_at")
+    .select("id, payload")
     .eq("term_id", termId)
-    .gt("expires_at", nowIso)
+    .gte("refreshed_at", currentWeekStartISO())
     .maybeSingle();
 
   if (error) {
@@ -328,18 +306,7 @@ export async function findRecentReportForTerm(
     return null;
   }
 
-  if (data) {
-    if (
-      typeof data.expires_at !== "string" ||
-      !isExpiresAtForCurrentWeek(data.expires_at, now)
-    ) {
-      return null;
-    }
-  }
-
-  return parseReportRow(
-    data ? { id: data.id, payload: data.payload } : null,
-  );
+  return parseReportRow(data ? { id: data.id, payload: data.payload } : null);
 }
 
 /** Shown when Supabase is off or there is not enough query history yet. */
@@ -401,8 +368,10 @@ export async function upsertReportFromLlm(params: {
   if (!isSupabaseServiceConfigured()) return null;
 
   const supabase = getServiceSupabase();
-  const expiresAt = getReportExpiresAtISO(new Date());
-  const refreshedAt = new Date().toISOString();
+  const now = new Date();
+  const refreshedAt = now.toISOString();
+  // expires_at satisfies the DB NOT NULL constraint; freshness is determined by refreshed_at elsewhere.
+  const expiresAt = currentWeekStartISO(now);
 
   const { data, error } = await supabase
     .from("reports")
@@ -499,19 +468,18 @@ export async function recordQuery(params: {
   }
 }
 
-/** Slugs with a non-expired report, for `/hype/[slug]` sitemap entries. */
+/** Slugs with a current-week report, for `/hype/[slug]` sitemap entries. */
 export async function getSitemapHypeSlugs(): Promise<
   { slug: string; lastModified: Date | undefined }[]
 > {
   if (!isSupabaseServiceConfigured()) return [];
 
   const supabase = getServiceSupabase();
-  const nowIso = new Date().toISOString();
 
   const { data, error } = await supabase
     .from("reports")
     .select("refreshed_at, terms!inner(slug)")
-    .gt("expires_at", nowIso);
+    .gte("refreshed_at", currentWeekStartISO());
 
   if (error) {
     console.error(

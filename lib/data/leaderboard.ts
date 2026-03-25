@@ -1,5 +1,5 @@
 import { hypeAnalysisSchema } from "@/lib/hype-analysis-schema";
-import { isoUtcDaysAgo } from "@/lib/helpers/date";
+import { currentWeekStartISO } from "@/lib/helpers/date";
 import {
   getServiceSupabase,
   isSupabaseServiceConfigured,
@@ -17,19 +17,17 @@ export type LeaderboardEntry = {
 };
 
 /**
- * Last 7 days of refreshed reports, deduped by normalized term name (highest hype wins),
- * sorted by hype score descending.
+ * Current-week reports (refreshed_at >= Monday 00:00 UTC), deduped by normalized term name
+ * (highest hype wins), sorted by hype score descending.
  */
 export async function getLeaderboardEntries(): Promise<LeaderboardEntry[]> {
   if (!isSupabaseServiceConfigured()) return [];
-
-  const oneWeekAgo = isoUtcDaysAgo(7);
 
   const supabase = getServiceSupabase();
   const { data, error } = await supabase
     .from("reports")
     .select("id, refreshed_at, payload, terms!inner(name, slug)")
-    .gte("refreshed_at", oneWeekAgo)
+    .gte("refreshed_at", currentWeekStartISO())
     .filter("payload->hypeScore", "gt", 0);
 
   if (error) {
