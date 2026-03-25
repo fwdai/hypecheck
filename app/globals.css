@@ -170,6 +170,100 @@
     border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
   }
 
+  @keyframes shimmer-sweep {
+    0% {
+      transform: translateX(-120%) skewX(-15deg);
+    }
+    100% {
+      transform: translateX(250%) skewX(-15deg);
+    }
+  }
+
+  /** Slow, low-contrast sweep using theme primary — sits under ::before / ::after */
+  @keyframes shimmer-subtle {
+    0% {
+      background-position: 0% 50%;
+    }
+    100% {
+      background-position: 100% 50%;
+    }
+  }
+
+  /* Shimmer border — colored streak along the edge */
+  .shimmer-border {
+    pointer-events: none;
+    border-radius: inherit;
+    background: linear-gradient(
+      102deg,
+      transparent 0%,
+      color-mix(in srgb, var(--primary) 7%, transparent) 40%,
+      color-mix(in srgb, var(--primary) 11%, transparent) 50%,
+      color-mix(in srgb, var(--primary) 7%, transparent) 60%,
+      transparent 100%
+    );
+    background-size: 240% 100%;
+    animation: shimmer-subtle 7s ease-in-out infinite;
+  }
+
+  .shimmer-border.shimmer-auto {
+    opacity: 0;
+    animation:
+      shimmer-subtle 7s ease-in-out infinite,
+      shimmer-attention 8s ease-in-out infinite;
+  }
+
+  .shimmer-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(175 80% 55% / 0.3) 30%,
+      hsl(175 80% 65% / 0.7) 48%,
+      hsl(200 90% 60% / 0.5) 52%,
+      hsl(175 80% 55% / 0.3) 70%,
+      transparent 100%
+    );
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: xor;
+    -webkit-mask-composite: xor;
+    padding: 1.5px;
+    border-radius: inherit;
+    animation: shimmer-sweep 3s ease-in-out infinite;
+  }
+
+  /* Background glow that sweeps through */
+  .shimmer-border::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      105deg,
+      transparent 0%,
+      hsl(175 80% 55% / 0.04) 35%,
+      hsl(175 80% 60% / 0.08) 50%,
+      hsl(175 80% 55% / 0.04) 65%,
+      transparent 100%
+    );
+    animation: shimmer-sweep 3s ease-in-out infinite;
+  }
+
+  @keyframes shimmer-attention {
+    0%,
+    78%,
+    100% {
+      opacity: 0;
+    }
+    82%,
+    92% {
+      opacity: 1;
+    }
+  }
+
   .glow-pulse {
     animation: glow-pulse 2.5s ease-in-out infinite;
   }

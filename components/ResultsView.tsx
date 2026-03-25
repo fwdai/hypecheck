@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { HypeGauge } from "@/components/HypeGauge";
+import { ShareBlock } from "@/components/ShareBlock";
 import { VoteBlock } from "@/components/VoteBlock";
 import { Button } from "@/components/ui/button";
 import {
@@ -167,6 +168,12 @@ export function ResultsView({
               <p className="text-sm font-semibold text-foreground">{value}</p>
             </div>
           ))}
+        </div>
+
+        <div className="w-full animate-fade-up-delay-5">
+          <ShareBlock
+            text={`${term} scored ${data.hypeScore}/100 on the Hypometer — ${data.realValuePercent}% real, ${hypePercent}% hype. Is it real or just hype?`}
+          />
         </div>
 
         <Button

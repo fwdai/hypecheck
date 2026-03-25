@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, Flame, Trophy, Zap } from "lucide-react";
 
+import { ShareBlock } from "@/components/ShareBlock";
 import type { LeaderboardEntry } from "@/lib/data/leaderboard";
 
 function getRankStyle(rank: number) {
@@ -104,6 +105,10 @@ export function LeaderboardView({ entries }: LeaderboardViewProps) {
               </Link>
             ))
           )}
+        </div>
+
+        <div className="w-full animate-fade-up-delay-2">
+          <ShareBlock text="Check out this week's overhyped tech — ranked by the hype score. Is your favorite technology all hype?" />
         </div>
 
         <p className="text-muted-foreground/30 text-xs font-mono pb-8">
