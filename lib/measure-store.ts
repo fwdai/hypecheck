@@ -498,3 +498,52 @@ export async function recordQuery(params: {
     );
   }
 }
+
+/** Slugs with a non-expired report, for `/hype/[slug]` sitemap entries. */
+export async function getSitemapHypeSlugs(): Promise<
+  { slug: string; lastModified: Date | undefined }[]
+> {
+  if (!isSupabaseServiceConfigured()) return [];
+
+  const supabase = getServiceSupabase();
+  const nowIso = new Date().toISOString();
+
+  const { data, error } = await supabase
+    .from("reports")
+    .select("refreshed_at, terms!inner(slug)")
+    .gt("expires_at", nowIso);
+
+  if (error) {
+    console.error(
+      "[measure-store] getSitemapHypeSlugs",
+      error.message,
+      error.details ?? "",
+      error.hint ?? "",
+    );
+    return [];
+  }
+
+  type TermRow = { slug: string };
+  const rows = data as
+    | {
+        refreshed_at: string;
+        terms: TermRow | TermRow[] | null;
+      }[]
+    | null;
+
+  const best = new Map<string, string>();
+  for (const row of rows ?? []) {
+    const termRel = row.terms;
+    const termRow = Array.isArray(termRel) ? termRel[0] : termRel;
+    const slug = termRow?.slug?.trim();
+    if (!slug) continue;
+    const t = row.refreshed_at;
+    const prev = best.get(slug);
+    if (!prev || (t && t > prev)) best.set(slug, t);
+  }
+
+  return Array.from(best.entries()).map(([slug, refreshedAt]) => ({
+    slug,
+    lastModified: refreshedAt ? new Date(refreshedAt) : undefined,
+  }));
+}
