@@ -17,7 +17,7 @@ export type LeaderboardEntry = {
 };
 
 /**
- * Current-week reports (refreshed_at >= Monday 00:00 UTC), deduped by normalized term name
+ * Current-week reports (created_at >= Monday 00:00 UTC), deduped by normalized term name
  * (highest hype wins), sorted by hype score descending.
  */
 export async function getLeaderboardEntries(): Promise<LeaderboardEntry[]> {
@@ -26,8 +26,8 @@ export async function getLeaderboardEntries(): Promise<LeaderboardEntry[]> {
   const supabase = getServiceSupabase();
   const { data, error } = await supabase
     .from("reports")
-    .select("id, refreshed_at, payload, terms!inner(name, slug)")
-    .gte("refreshed_at", currentWeekStartISO())
+    .select("id, created_at, payload, terms!inner(name, slug)")
+    .gte("created_at", currentWeekStartISO())
     .filter("payload->hypeScore", "gt", 0);
 
   if (error) {
@@ -44,7 +44,7 @@ export async function getLeaderboardEntries(): Promise<LeaderboardEntry[]> {
   const rows = data as
     | {
         id: string;
-        refreshed_at: string;
+        created_at: string;
         payload: unknown;
         terms: TermRow | TermRow[] | null;
       }[]
@@ -68,7 +68,7 @@ export async function getLeaderboardEntries(): Promise<LeaderboardEntry[]> {
       hype_score: a.hypeScore,
       real_value_percent: a.realValuePercent,
       verdict: a.verdict,
-      created_at: row.refreshed_at,
+      created_at: row.created_at,
     };
 
     const key = entry.term.toLowerCase().trim();

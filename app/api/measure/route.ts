@@ -9,7 +9,7 @@ import {
   findRecentReportForTerm,
   matchTermBySimilarity,
   recordQuery,
-  upsertReportFromLlm,
+  insertReportFromLlm,
   upsertWeeklyTermStats,
 } from "@/lib/measure-store";
 import { parseMeasureRequestBody } from "@/lib/measure-request-body";
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: message }, { status: 502 });
   }
 
-  await upsertReportFromLlm({
+  await insertReportFromLlm({
     termId: termRecord.id,
     analysis,
     model,

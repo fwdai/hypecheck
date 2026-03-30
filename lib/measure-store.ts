@@ -1,7 +1,10 @@
 import { randomBytes } from "node:crypto";
 
 import type { HypeStatsSnapshot } from "@/lib/ai/stats-snapshot-prompt";
-import { currentWeekStartISO } from "@/lib/helpers/date";
+import {
+  currentWeekStartISO,
+  reportWeekExpiresAtISO,
+} from "@/lib/helpers/date";
 import {
   hypeAnalysisSchema,
   type ParsedHypeAnalysis,
@@ -279,8 +282,7 @@ export async function getHypeReportBySlug(slug: string): Promise<{
 }
 
 /**
- * Current-week report for a term: refreshed_at must fall within this calendar week
- * (since Monday 00:00 UTC). At most one row per term.
+ * Latest report for this term created in the current ISO week (UTC, Monday start).
  */
 export async function findRecentReportForTerm(
   termId: string,
@@ -293,7 +295,9 @@ export async function findRecentReportForTerm(
     .from("reports")
     .select("id, payload")
     .eq("term_id", termId)
-    .gte("refreshed_at", currentWeekStartISO())
+    .gte("created_at", currentWeekStartISO())
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   if (error) {
@@ -360,7 +364,8 @@ export async function getTopTrendingQueries(limit = 10): Promise<string[]> {
   return labels.slice(0, capped);
 }
 
-export async function upsertReportFromLlm(params: {
+/** Inserts a new weekly report row (historical rows are kept). Handles concurrent duplicate-week inserts. */
+export async function insertReportFromLlm(params: {
   termId: string;
   analysis: ParsedHypeAnalysis;
   model: string;
@@ -369,35 +374,36 @@ export async function upsertReportFromLlm(params: {
 
   const supabase = getServiceSupabase();
   const now = new Date();
-  const refreshedAt = now.toISOString();
-  // expires_at satisfies the DB NOT NULL constraint; freshness is determined by refreshed_at elsewhere.
-  const expiresAt = currentWeekStartISO(now);
+  const expiresAt = reportWeekExpiresAtISO(now);
 
   const { data, error } = await supabase
     .from("reports")
-    .upsert(
-      {
-        term_id: params.termId,
-        payload: params.analysis,
-        model: params.model,
-        expires_at: expiresAt,
-        refreshed_at: refreshedAt,
-      },
-      { onConflict: "term_id" },
-    )
+    .insert({
+      term_id: params.termId,
+      payload: params.analysis,
+      model: params.model,
+      expires_at: expiresAt,
+    })
     .select("id")
     .single();
 
-  if (error) {
-    console.error(
-      "[measure-store] upsertReportFromLlm",
-      error.message,
-      error.details ?? "",
-      error.hint ?? "",
-    );
-    return null;
+  if (!error && data?.id) {
+    return data.id;
   }
-  return data?.id ?? null;
+
+  const code = (error as { code?: string } | null)?.code;
+  if (code === "23505") {
+    const existing = await findRecentReportForTerm(params.termId);
+    return existing?.reportId ?? null;
+  }
+
+  console.error(
+    "[measure-store] insertReportFromLlm",
+    error?.message ?? error,
+    (error as { details?: string })?.details ?? "",
+    (error as { hint?: string })?.hint ?? "",
+  );
+  return null;
 }
 
 /**
@@ -478,8 +484,8 @@ export async function getSitemapHypeSlugs(): Promise<
 
   const { data, error } = await supabase
     .from("reports")
-    .select("refreshed_at, terms!inner(slug)")
-    .gte("refreshed_at", currentWeekStartISO());
+    .select("created_at, terms!inner(slug)")
+    .gte("created_at", currentWeekStartISO());
 
   if (error) {
     console.error(
@@ -494,7 +500,7 @@ export async function getSitemapHypeSlugs(): Promise<
   type TermRow = { slug: string };
   const rows = data as
     | {
-        refreshed_at: string;
+        created_at: string;
         terms: TermRow | TermRow[] | null;
       }[]
     | null;
@@ -505,13 +511,13 @@ export async function getSitemapHypeSlugs(): Promise<
     const termRow = Array.isArray(termRel) ? termRel[0] : termRel;
     const slug = termRow?.slug?.trim();
     if (!slug) continue;
-    const t = row.refreshed_at;
+    const t = row.created_at;
     const prev = best.get(slug);
     if (!prev || (t && t > prev)) best.set(slug, t);
   }
 
-  return Array.from(best.entries()).map(([slug, refreshedAt]) => ({
+  return Array.from(best.entries()).map(([slug, createdAt]) => ({
     slug,
-    lastModified: refreshedAt ? new Date(refreshedAt) : undefined,
+    lastModified: createdAt ? new Date(createdAt) : undefined,
   }));
 }
