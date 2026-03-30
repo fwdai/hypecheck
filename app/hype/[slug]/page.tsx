@@ -4,6 +4,9 @@ import { ResultsPageClient } from "@/components/results-page-client";
 import { getHypeReportBySlug } from "@/lib/measure-store";
 import type { HypeAnalysis } from "@/types/hype";
 
+export const maxDuration = 60;
+export const runtime = "nodejs";
+
 type Props = { params: Promise<{ slug: string }> };
 
 // Merge with parent `openGraph`/`twitter` from root layout so OG and Twitter tags update.

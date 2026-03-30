@@ -1,6 +1,9 @@
 import { ImageResponse } from "next/og";
 import { getHypeReportBySlug } from "@/lib/measure-store";
 
+export const maxDuration = 60;
+export const runtime = "nodejs";
+
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

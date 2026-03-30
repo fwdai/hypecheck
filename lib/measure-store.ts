@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 
+import { generateHypeAnalysis } from "@/lib/ai/generate-hype-analysis";
 import type { HypeStatsSnapshot } from "@/lib/ai/stats-snapshot-prompt";
 import {
   currentWeekStartISO,
@@ -10,6 +11,7 @@ import {
   type ParsedHypeAnalysis,
 } from "@/lib/hype-analysis-schema";
 import { normalizeQuery } from "@/lib/normalize-query";
+import { fetchHypeStatsSnapshot } from "@/lib/stats";
 import {
   getServiceSupabase,
   isSupabaseServiceConfigured,
@@ -255,7 +257,9 @@ export async function castReportVote(params: {
 }
 
 /**
- * Canonical term label + fresh report payload for `/hype/[slug]` (SSR).
+ * Canonical term label + current-week report for `/hype/[slug]` (SSR).
+ * When the term exists but there is no report for this ISO week yet, runs the same
+ * stats + LLM + insert pipeline as `POST /api/measure` before returning.
  */
 export async function getHypeReportBySlug(slug: string): Promise<{
   termName: string;
@@ -267,7 +271,14 @@ export async function getHypeReportBySlug(slug: string): Promise<{
   const term = await getTermBySlug(slug);
   if (!term) return null;
 
-  const report = await findRecentReportForTerm(term.id);
+  let report = await findRecentReportForTerm(term.id);
+  if (!report) {
+    await ensureCurrentWeekReportForTerm({
+      termId: term.id,
+      termName: term.name,
+    });
+    report = await findRecentReportForTerm(term.id);
+  }
   if (!report) return null;
 
   const { agrees, disagrees } = await getVoteCountsForReport(report.reportId);
@@ -404,6 +415,40 @@ export async function insertReportFromLlm(params: {
     (error as { hint?: string })?.hint ?? "",
   );
   return null;
+}
+
+/**
+ * Ensures a report row exists for the current ISO week (UTC). If none, fetches stats,
+ * runs the LLM, and inserts. Used by `/hype/[slug]` and `POST /api/measure`.
+ */
+export async function ensureCurrentWeekReportForTerm(params: {
+  termId: string;
+  termName: string;
+}): Promise<void> {
+  if (!isSupabaseServiceConfigured()) {
+    throw new Error("Database is not configured.");
+  }
+
+  const existing = await findRecentReportForTerm(params.termId);
+  if (existing) return;
+
+  const statsSnapshot = await fetchHypeStatsSnapshot(params.termName);
+  await upsertWeeklyTermStats({
+    termId: params.termId,
+    snapshot: statsSnapshot,
+  });
+  const { analysis, model } = await generateHypeAnalysis(
+    params.termName,
+    statsSnapshot,
+  );
+  const id = await insertReportFromLlm({
+    termId: params.termId,
+    analysis,
+    model,
+  });
+  if (!id) {
+    throw new Error("Could not save hype report.");
+  }
 }
 
 /**

@@ -1,16 +1,13 @@
 import { NextResponse } from "next/server";
 import { isQueryAnalyzable } from "@/lib/ai/classify-query-analyzable";
-import { generateHypeAnalysis } from "@/lib/ai/generate-hype-analysis";
-import { fetchHypeStatsSnapshot } from "@/lib/stats";
 import { getClientIp } from "@/lib/get-client-ip";
 import { hashIp } from "@/lib/hash-ip";
 import {
   createTerm,
+  ensureCurrentWeekReportForTerm,
   findRecentReportForTerm,
   matchTermBySimilarity,
   recordQuery,
-  insertReportFromLlm,
-  upsertWeeklyTermStats,
 } from "@/lib/measure-store";
 import { parseMeasureRequestBody } from "@/lib/measure-request-body";
 import { normalizeQuery } from "@/lib/normalize-query";
@@ -76,30 +73,17 @@ export async function POST(req: Request) {
     });
   }
 
-  let analysis;
-  let model: string;
   try {
-    const statsSnapshot = await fetchHypeStatsSnapshot(termRecord.name);
-    await upsertWeeklyTermStats({
+    await ensureCurrentWeekReportForTerm({
       termId: termRecord.id,
-      snapshot: statsSnapshot,
+      termName: termRecord.name,
     });
-    ({ analysis, model } = await generateHypeAnalysis(
-      termRecord.name,
-      statsSnapshot,
-    ));
   } catch (e: unknown) {
     const message =
       e instanceof Error ? e.message : "Upstream model request failed.";
     console.error("[measure]", e);
     return NextResponse.json({ error: message }, { status: 502 });
   }
-
-  await insertReportFromLlm({
-    termId: termRecord.id,
-    analysis,
-    model,
-  });
 
   await logQuery();
 
